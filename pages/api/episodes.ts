@@ -1,16 +1,20 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import firebase from "firebase-admin";
-import path from "path";
 import * as cheerio from "cheerio";
+import firebase from "firebase-admin";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Configuration, OpenAIApi } from "openai";
-import serviceAccount from "../../super-wire-firebase-adminsdk-hsukl-d30227eea4.json";
+import path from "path";
+
+const credential = JSON.parse(
+  Buffer.from(process.env.GOOGLE_SERVICE_KEY || "", "base64").toString()
+);
 
 if (firebase.apps.length === 0) {
   firebase.initializeApp({
-    credential: firebase.credential.cert(serviceAccount as any),
+    projectId: "super-wire",
+    credential: firebase.credential.cert(credential),
     storageBucket: "gs://super-wire.appspot.com/",
   });
 }
@@ -324,16 +328,19 @@ const recordEpisode = async (episode: Episode): Promise<void> => {
   // TODO: Figure out intentional hosts
 
   // Process intro
-  const introRes = await fetch(`${TEXT_TO_SPEECH_BASE_ENDPOINT}/${ELEVEN_VOICE_IDS.ADAM}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "xi-api-key": process.env.ELEVEN_LABS_API_KEY,
-    } as HeadersInit,
-    body: JSON.stringify({
-      text: intro,
-    }),
-  });
+  const introRes = await fetch(
+    `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${ELEVEN_VOICE_IDS.ADAM}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": process.env.ELEVEN_LABS_API_KEY,
+      } as HeadersInit,
+      body: JSON.stringify({
+        text: intro,
+      }),
+    }
+  );
 
   const introData = await introRes.arrayBuffer();
 
@@ -374,16 +381,19 @@ const recordEpisode = async (episode: Episode): Promise<void> => {
   }
 
   // Process conclusion
-  const conclusionRes = await fetch(`${TEXT_TO_SPEECH_BASE_ENDPOINT}/${ELEVEN_VOICE_IDS.ADAM}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "xi-api-key": process.env.ELEVEN_LABS_API_KEY,
-    } as HeadersInit,
-    body: JSON.stringify({
-      text: conclusion,
-    }),
-  });
+  const conclusionRes = await fetch(
+    `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${ELEVEN_VOICE_IDS.ADAM}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": process.env.ELEVEN_LABS_API_KEY,
+      } as HeadersInit,
+      body: JSON.stringify({
+        text: conclusion,
+      }),
+    }
+  );
 
   const conclusionData = await conclusionRes.arrayBuffer();
 
