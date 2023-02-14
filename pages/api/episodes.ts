@@ -6,6 +6,7 @@ import fs from "fs";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
+import { HOSTS, PROMPTS } from "../../constants";
 
 const credential = JSON.parse(
   Buffer.from(process.env.GOOGLE_SERVICE_KEY || "", "base64").toString()
@@ -23,47 +24,6 @@ const openaiConfig = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(openaiConfig);
-
-const NEWS_INTRO_PROMPT = `Consider a news reporter whose codename is Adam.
-- Adam reports the important happenings of the world to his audience
-- Adam does not just read headlines: he expands on them and their implications
-- Adam has a charming and engaging personality
-- Adam ignores frivolous and repetitive news
-- Adam combines similar stories when reporting
-- Adam spends more time talking about events of scientific, technological, economic, and geopolitical significance
-- Adam is not very interested in sports or pop culture
-
-Write the introduction for a new episode of Adam's news show, Super Wire, based on the following headlines. Cluster headlines into categories, rather than hopping from one headline to another without regard for the subjects being reported. Always finish the introduction with the phrase: "And now, on to the show."
-
-HEADLINES:
-"""
-{HEADLINES}
-"""
-
-SUPER WIRE EPISODE INTRODUCTION:`;
-
-const NEWS_SEGMENT_PROMPT = `Write a fresh and engaging news segment based on the following story. Do not introduce the segment, and do not write a conclusion for it. Just write the segment itself.
-
-STORY:
-"""
-{STORY}
-"""
-
-NEWS SEGMENT:`;
-
-const NEWS_CONCLUSION_PROMPT = `Write a few paragraphs for the conclusion to today's episode of Super Wire.
-- The date is {DATE}
-- Briefly touch on a couple of the headlines from today's episode
-- Consider the broader implications of today's stories
-- Touch on the darkest, most frightening elements of today's stories -- but always pull out of it with hopeful and inspiring messaging
-- Always end the conclusion with the phrase: "Stay super, everyone. And see you next time: on Super Wire!"
-
-HEADLINES:
-"""
-{HEADLINES}
-"""
-
-CONCLUSION:`;
 
 const ELEVEN_VOICE_IDS = {
   ADAM: "pNInz6obpgDQGcFmaJgB",
@@ -161,10 +121,13 @@ const writeIntroduction = async (headlines: any[]): Promise<string> => {
 
   while (retries < MAX_RETRIES) {
     try {
-      const prompt = NEWS_INTRO_PROMPT.replace(
+      // TODO: Link the prompt host with the audio host to guarantee consistency
+      const prompt = PROMPTS.EP_INTRO.replace(
         "{HEADLINES}",
         headlines.join("\n")
-      );
+      )
+        .replace("{HOST_PERSONALITY}", HOSTS.ADAM.personality)
+        .replace("{HOST_NAME}", HOSTS.ADAM.name);
       const maxTokens = getMaxTokens(prompt);
       // Generate episode intro
       response = await openai.createCompletion({
@@ -196,7 +159,13 @@ const writeIntroduction = async (headlines: any[]): Promise<string> => {
   return response.data.choices[0].text || "";
 };
 
-const writeSegment = async (content: string): Promise<string> => {
+type Host = {
+  name: string;
+  voiceId: string;
+  personality: string;
+}
+
+const writeSegment = async (content: string, host: Host): Promise<string> => {
   console.log("Writing segment...");
 
   let retries = 0;
@@ -204,7 +173,9 @@ const writeSegment = async (content: string): Promise<string> => {
 
   while (retries < MAX_RETRIES) {
     try {
-      const prompt = NEWS_SEGMENT_PROMPT.replace("{STORY}", content);
+      const prompt = PROMPTS.EP_SEGMENT.replace("{STORY}", content)
+        .replace("{HOST_PERSONALITY}", host.personality)
+        .replace("{HOST_NAME}", host.name);
       const maxTokens = getMaxTokens(prompt);
 
       if (maxTokens < 100) {
@@ -250,10 +221,12 @@ const writeConclusion = async (headlines: any[]): Promise<string> => {
 
   while (retries < MAX_RETRIES) {
     try {
-      const prompt = NEWS_CONCLUSION_PROMPT.replace(
+      const prompt = PROMPTS.EP_OUTRO.replace(
         "{HEADLINES}",
         headlines.join("\n")
-      ).replace("{DATE}", new Date().toLocaleDateString());
+      )
+        .replace("{HOST_PERSONALITY}", HOSTS.ADAM.personality)
+        .replace("{HOST_NAME}", HOSTS.ADAM.name);
 
       const maxTokens = getMaxTokens(prompt);
       response = await openai.createCompletion({
@@ -299,11 +272,12 @@ const writeEpisode = async (stories: any[]): Promise<Episode> => {
   );
   const intro = await writeIntroduction(headlines);
 
-  // TODO: Experiment with different hosts for different segments
   let segments = [];
 
-  for (const story of stories) {
-    const segment = await writeSegment(story.content);
+  // for of with index
+  for (let i = 0; i < stories.length; i++) {
+    const host = i % 2 === 0 ? HOSTS.DALLAS : HOSTS.JORDAN
+    const segment = await writeSegment(stories[i].content, host);
     segments.push(segment);
   }
 
@@ -325,11 +299,9 @@ const recordEpisode = async (episode: Episode): Promise<void> => {
 
   const timestamp = new Date().toISOString();
 
-  // TODO: Figure out intentional hosts
-
   // Process intro
   const introRes = await fetch(
-    `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${ELEVEN_VOICE_IDS.ADAM}`,
+    `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${HOSTS.ADAM.voiceId}`,
     {
       method: "POST",
       headers: {
@@ -353,8 +325,10 @@ const recordEpisode = async (episode: Episode): Promise<void> => {
   });
 
   // Process segments
+  // TODO: Alternate segments between hosts Adam, Domi, Arnold, Elli, maybe Bella and Antoni
   for (let i = 0; i < segments.length; i++) {
-    const segmentRes = await fetch(getRandomHostEndpoint(), {
+    const hostEndpoint = i % 2 === 0 ? `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${HOSTS.DALLAS.voiceId}` : `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${HOSTS.JORDAN.voiceId}`;
+    const segmentRes = await fetch(hostEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -382,7 +356,7 @@ const recordEpisode = async (episode: Episode): Promise<void> => {
 
   // Process conclusion
   const conclusionRes = await fetch(
-    `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${ELEVEN_VOICE_IDS.ADAM}`,
+    `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${HOSTS.ADAM.voiceId}`,
     {
       method: "POST",
       headers: {
