@@ -47,6 +47,7 @@ const INTRO_SEGMENT_CHARACTERISTICS = `The intro segment is a 30 second segment 
 - It introduces the show, the host, and the topics that will be covered
 - It is a good opportunity to establish the show's tone and personality
 - It is a good opportunity to establish the host's personality
+- Always write dollar amounts and numbers as whole words, not numerals
 - It always ends with a segue into the first story`;
 
 const STORY_SEGMENT_CHARACTERISTICS = `The story segment is a 2-3 minute segment that covers a single news story.
@@ -54,6 +55,7 @@ const STORY_SEGMENT_CHARACTERISTICS = `The story segment is a 2-3 minute segment
 - It is fact-focused
 - It is informative and insightful
 - It is dynamic and engaging
+- Always write dollar amounts and numbers as whole words, not numerals
 - It always starts with a curious lead-in to the story
 - It always ends with a pithy summary of the story`;
 
@@ -61,6 +63,7 @@ const OUTRO_SEGMENT_CHARACTERISTICS = `The outro segment is a 30 second segment 
 - It is a reflective, thoughtful segment
 - It summarizes the main news stories of the day
 - Briefly touch on a couple of the headlines from today's episode
+- Always write dollar amounts and numbers as whole words, not numerals
 - Consider the broader implications of today's stories
 - Touch on the darkest, most frightening elements of today's stories -- but always pull out of it with hopeful and inspiring messaging
 - It always ends with the phrase: "Stay super, everyone. And see you next time: on Super Wire!"`;

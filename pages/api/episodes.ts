@@ -51,33 +51,33 @@ const TOP_HEADLINES_ENDPOINT = `https://newsapi.org/v2/top-headlines`;
 const NEWS_SOURCES = [
   "bbc-news",
   /* "politico", */
-  "financial-times",
+  /* "financial-times", */
   /* "fox-news", */
   /* "cnn", */
   /* "pbs", */
   /* "independent", */
-  "ars-technica",
+  /* "ars-technica", */
   "associated-press",
-  "bloomberg",
+  /* "bloomberg", */
   /* "axios", */
   /* "breitbart-news", */
   /* "business-insider", */
   /* "cbs-news", */
   /* "fortune", */
   /* "google-news", */
-  "hacker-news",
+  /* "hacker-news", */
   /* "national-geographic", */
   /* "national-review", */
   /* "nbc-news", */
   /* "new-scientist", */
   /* "newsweek", */
-  "new-york-magazine",
+  /* "new-york-magazine", */
   "reuters",
   /* "techcrunch", */
   /* "the-american-conservative", */
   /* "the-jerusalem-post", */
   /* "the-verge", */
-  "the-wall-street-journal",
+  /* "the-wall-street-journal", */
   /* "wired", */
 ];
 
@@ -427,28 +427,37 @@ const recordEpisode = async (episode: Episode): Promise<void> => {
 };
 
 const scrapeStoryContent = async (headlines: any[]): Promise<any[]> => {
+  console.log("Scraping story content...");
+  console.log("headlines:", headlines)
   let stories = [];
 
   // Collect source content for headlines
   for (const headline of headlines) {
+    console.log("headline:", headline)
     const url = headline.url;
     const response = await fetch(url);
     const html = await response.text();
     const $ = cheerio.load(html);
     let article = $("article").text();
+    console.log("article:", article)
 
     // If article contains no content, look for divs with class "Article"
     if (article.length === 0) {
       article = $(".Article").text();
+      console.log(".Article :: article:", article)
       if (article.length === 0) {
         article = $(".article").text();
+        console.log(".article :: article:", article)
         if (article.length === 0) {
           article = $(".ArticleBody").text();
+          console.log(".ArticleBody :: article:", article)
           if (article.length === 0) {
             article = $(".article-body").text();
+            console.log(".article-body :: article:", article)
             if (article.length === 0) {
               // If no article content is found, use the description
               article = headline.description;
+              console.log("headline.description :: article:", article)
             }
           }
         }
@@ -463,6 +472,7 @@ const scrapeStoryContent = async (headlines: any[]): Promise<any[]> => {
     article = article.replace(/\s+/g, " ");
     article = article.replace(/<[^>]*>/g, "");
     article = article.replace(/ADVERTISEMENT/g, "");
+    console.log("article, post-replacements:", article)
 
     stories.push({
       source: headline.source.name,
