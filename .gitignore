@@ -34,3 +34,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+super-wire-firebase-adminsdk-hsukl-d30227eea4.json
+.vscode
+.tool-versions
