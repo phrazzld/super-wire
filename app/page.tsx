@@ -80,7 +80,9 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-500 via-blue-500 to-teal-500">
-      <h1 className="text-white text-5xl font-bold my-20">Super Wire</h1>
+      <h1 className="text-white text-5xl font-bold mt-20 mb-5">Super Wire</h1>
+      <h2 className="text-white text-2xl mb-10 max-w-md">Experience the future of news.</h2>
+      <p className="text-white text-lg mb-10 max-w-md">With cutting-edge technology and a commitment to accuracy and impartiality, we deliver the news you need to know in a way that's accessible and engaging.</p>
       {process.env.NODE_ENV === "development" && (
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full mb-10"

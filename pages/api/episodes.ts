@@ -25,26 +25,8 @@ const openaiConfig = new Configuration({
 });
 const openai = new OpenAIApi(openaiConfig);
 
-const ELEVEN_VOICE_IDS = {
-  ADAM: "pNInz6obpgDQGcFmaJgB",
-  RACHEL: "21m00Tcm4TlvDq8ikWAM",
-  /* DOMI: "AZnzlk1XvdvUeBnXmlld", */
-  BELLA: "EXAVITQu4vr4xnSDxMaL",
-  ANTONI: "ErXwobaYiN019PkySvjV",
-  ELLI: "MF3mGyEYCl7XYWbV9V6O",
-  JOSH: "TxGEqnHWrfWFTfGW9XjX",
-  ARNOLD: "VR6AewLTigWG4xSOukaG",
-  /* SAM: "yoZ06aMxZJJ28mfd3POQ", */
-};
-
 const TEXT_TO_SPEECH_BASE_ENDPOINT =
   "https://api.elevenlabs.io/v1/text-to-speech";
-
-const getRandomHostEndpoint = (): string => {
-  const voiceIds = Object.values(ELEVEN_VOICE_IDS);
-  const randomVoiceId = voiceIds[Math.floor(Math.random() * voiceIds.length)];
-  return `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${randomVoiceId}`;
-};
 
 const TOP_HEADLINES_ENDPOINT = `https://newsapi.org/v2/top-headlines`;
 
@@ -87,8 +69,8 @@ const getTopHeadlines = async () => {
   console.log("Getting top headlines...");
   const response = await fetch(
     TOP_HEADLINES_ENDPOINT +
-      `?sources=${NEWS_SOURCES.join(",")}` +
-      `&pageSize=${NEWS_PAGE_SIZE}`,
+    `?sources=${NEWS_SOURCES.join(",")}` +
+    `&pageSize=${NEWS_PAGE_SIZE}`,
     {
       headers: {
         Authorization: `Bearer ${process.env.NEWS_API_KEY}`,
@@ -163,7 +145,7 @@ type Host = {
   name: string;
   voiceId: string;
   personality: string;
-}
+};
 
 const writeSegment = async (content: string, host: Host): Promise<string> => {
   console.log("Writing segment...");
@@ -276,7 +258,7 @@ const writeEpisode = async (stories: any[]): Promise<Episode> => {
 
   // for of with index
   for (let i = 0; i < stories.length; i++) {
-    const host = i % 2 === 0 ? HOSTS.DALLAS : HOSTS.JORDAN
+    const host = i % 2 === 0 ? HOSTS.DALLAS : HOSTS.JORDAN;
     const segment = await writeSegment(stories[i].content, host);
     segments.push(segment);
   }
@@ -327,7 +309,10 @@ const recordEpisode = async (episode: Episode): Promise<void> => {
   // Process segments
   // TODO: Alternate segments between hosts Adam, Domi, Arnold, Elli, maybe Bella and Antoni
   for (let i = 0; i < segments.length; i++) {
-    const hostEndpoint = i % 2 === 0 ? `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${HOSTS.DALLAS.voiceId}` : `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${HOSTS.JORDAN.voiceId}`;
+    const hostEndpoint =
+      i % 2 === 0
+        ? `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${HOSTS.DALLAS.voiceId}`
+        : `${TEXT_TO_SPEECH_BASE_ENDPOINT}/${HOSTS.JORDAN.voiceId}`;
     const segmentRes = await fetch(hostEndpoint, {
       method: "POST",
       headers: {
@@ -428,36 +413,36 @@ const recordEpisode = async (episode: Episode): Promise<void> => {
 
 const scrapeStoryContent = async (headlines: any[]): Promise<any[]> => {
   console.log("Scraping story content...");
-  console.log("headlines:", headlines)
+  console.log("headlines:", headlines);
   let stories = [];
 
   // Collect source content for headlines
   for (const headline of headlines) {
-    console.log("headline:", headline)
+    console.log("headline:", headline);
     const url = headline.url;
     const response = await fetch(url);
     const html = await response.text();
     const $ = cheerio.load(html);
     let article = $("article").text();
-    console.log("article:", article)
+    console.log("article:", article);
 
     // If article contains no content, look for divs with class "Article"
     if (article.length === 0) {
       article = $(".Article").text();
-      console.log(".Article :: article:", article)
+      console.log(".Article :: article:", article);
       if (article.length === 0) {
         article = $(".article").text();
-        console.log(".article :: article:", article)
+        console.log(".article :: article:", article);
         if (article.length === 0) {
           article = $(".ArticleBody").text();
-          console.log(".ArticleBody :: article:", article)
+          console.log(".ArticleBody :: article:", article);
           if (article.length === 0) {
             article = $(".article-body").text();
-            console.log(".article-body :: article:", article)
+            console.log(".article-body :: article:", article);
             if (article.length === 0) {
               // If no article content is found, use the description
               article = headline.description;
-              console.log("headline.description :: article:", article)
+              console.log("headline.description :: article:", article);
             }
           }
         }
@@ -472,7 +457,7 @@ const scrapeStoryContent = async (headlines: any[]): Promise<any[]> => {
     article = article.replace(/\s+/g, " ");
     article = article.replace(/<[^>]*>/g, "");
     article = article.replace(/ADVERTISEMENT/g, "");
-    console.log("article, post-replacements:", article)
+    console.log("article, post-replacements:", article);
 
     stories.push({
       source: headline.source.name,
